@@ -1,0 +1,9 @@
+# Training + evaluation (all preinstalled on Kaggle/Colab GPU images; torch is not pinned on purpose)
+torch>=2.1
+numpy
+scipy
+scikit-learn
+h5py
+pyyaml
+tqdm
+pytest

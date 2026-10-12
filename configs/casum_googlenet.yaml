@@ -1,0 +1,22 @@
+# Phase 1 baseline: original CA-SUM (Apostolidis et al., ICMR 2022) on the official GoogLeNet features.
+# Expected (paper, TVSum): F1 61.4, tau 0.160, rho 0.210. SumMe: F1 51.1.
+dataset: tvsum
+modalities: [googlenet]
+
+model:
+  d_model: null        # no projection: 1024-d input, exactly CA-SUM
+  block_size: 60
+  init_type: xavier
+  init_gain: 1.4142
+
+train:
+  n_epochs: 400
+  batch_size: 20       # gradient accumulation over 20 videos, as in CA-SUM
+  lr: 5.0e-4
+  l2_req: 1.0e-5
+  clip: 5.0
+  seed: 12345
+  reg_factor: 0.6      # sigma; scripts sweep 0.5..0.9 and evaluate.py picks one per split
+
+select:
+  start_epoch: 20

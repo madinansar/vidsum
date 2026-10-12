@@ -1,0 +1,4 @@
+# Feature extraction only (not needed to train on precomputed features)
+-r requirements.txt
+av             # PyAV: audio/video decoding with bundled FFmpeg
+panns-inference

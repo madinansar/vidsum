@@ -1,0 +1,10 @@
+data/*
+!data/README.md
+experiments/
+__pycache__/
+*.pyc
+*.egg-info/
+*.pt
+.DS_Store
+.ipynb_checkpoints/
+dist/
