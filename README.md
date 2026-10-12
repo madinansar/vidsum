@@ -40,7 +40,7 @@ locations can be overridden with `VIDSUM_DATA` and `VIDSUM_EXPERIMENTS`.
 ## Running on Kaggle (GPU)
 
 Code goes to GitHub and data to a Kaggle Dataset (data is gitignored).
-1. `bash scripts/pack_kaggle_data.sh` → `dist/vidsum-data.zip` (~160 MB: official h5/splits/annotations + aligned features; no raw videos).
+1. `bash scripts/pack_kaggle_data.sh` → `dist/vidsum-data.zip` (official h5/splits/annotations incl. MoSu + aligned features; no raw videos).
 2. kaggle.com → Datasets → New Dataset → upload the zip (private).
 3. Push this repo to GitHub, then import `notebooks/kaggle_train.ipynb` into a new Kaggle notebook and set its `REPO`.
 4. Notebook settings: Accelerator **GPU T4**, Internet **On**, Add Input → your dataset; for a private repo add a
@@ -61,6 +61,11 @@ python -m vidsum.features.extract_audio_pann --dataset tvsum
 
 # Phase 3: static fusion ablations
 bash scripts/run_splits.sh configs/va_concat.yaml tvsum
+
+# MoSu subset (visual + audio + text): import once, then compare visual-only vs fusions
+python -m vidsum.features.import_mosu
+bash scripts/run_splits.sh configs/mosu_visual.yaml mosu
+bash scripts/run_splits.sh configs/mosu_vat_concat.yaml mosu
 
 # re-evaluate; --oracle also prints test-selected F1 (diagnostic only, never report it)
 python -m vidsum.evaluate --exp casum_googlenet --dataset tvsum --oracle
@@ -85,9 +90,10 @@ The protocol is the same as CA-SUM's, so numbers are comparable to the paper:
   - [x] PANN audio extractor (step-aligned, 2048-d, PyAV decoding); TVSum + SumMe
   - [x] raw videos + official annotations for both datasets (see data/README.md for known issues)
   - [ ] re-download SumMe `Uncut_Evening_Flight` (truncated in SumMe.zip)
-  - [ ] text: Whisper ASR transcripts and/or VLM frame captions, then sentence embeddings (`features/extract_text.py`)
+  - [x] MoSu subset (200 videos) with visual/audio/text features from TripleSumm; text placeholder masked
+  - [ ] text for TVSum/SumMe: Whisper ASR transcripts and/or VLM frame captions, then sentence embeddings (`features/extract_text.py`)
   - [ ] verify origin of the legacy Whisper/CLIP files, or drop them
-- [ ] **Phase 3**: static fusion ablations (V, A, T, V+A, V+T, V+A+T × concat / xattn / softgate)
+- [ ] **Phase 3**: static fusion ablations (V, A, T, V+A, V+T, V+A+T × concat / xattn / softgate); MoSu is the main tri-modal testbed
 - [ ] **Phase 4**: RL modality gating (`models/gating_agent.py` + `objectives/rewards.py`, REINFORCE, λ sweep)
 - [ ] **Phase 5**: full benchmark + efficiency (params, train time < 10 min, latency, compute saved by gating)
 - [ ] **Phase 6**: `infer.py`, mp4 + ratio → summary mp4 (FFmpeg), chunked attention for 2-hour videos

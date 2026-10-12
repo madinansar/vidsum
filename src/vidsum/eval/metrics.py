@@ -29,12 +29,23 @@ def _ground_truth(dataset):
 
 @lru_cache(maxsize=None)
 def _user_scores(dataset):
-    tsv = dataset_info(dataset)["anno_tsv"]
-    return load_tvsum_user_scores(tsv) if tsv is not None else None
+    """Per-video [n_users, n_frames] scores for rank correlation, or None if the dataset has none."""
+    info = dataset_info(dataset)
+    if info["rank_gt"] == "tsv":
+        return load_tvsum_user_scores(info["anno_tsv"])
+    if info["rank_gt"] == "gtscore":
+        # One crowd "annotator": gtscore is per step; place it on the frame axis so picks index it.
+        out = {}
+        for key, g in _ground_truth(dataset).items():
+            frames = np.zeros((1, g["n_frames"]), dtype=np.float32)
+            frames[0, g["picks"]] = g["gtscore"]
+            out[key] = frames
+        return out
+    return None
 
 
 def evaluate_scores(dataset, scores, budget_ratio=0.15, per_video=False):
-    """Return mean F1 (%), Spearman's rho, Kendall's tau (TVSum only) and mAP@50/15 for the given videos."""
+    """Return mean F1 (%), Spearman's rho, Kendall's tau (if the dataset has rank ground truth) and mAP@50/15."""
     dataset = dataset.lower()
     gt = _ground_truth(dataset)
     users = _user_scores(dataset)

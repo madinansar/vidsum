@@ -1,0 +1,22 @@
+# MoSu subset (200 videos, 1 fps): CA-SUM on the provided 768-d visual features only.
+# The reference every multimodal MoSu run is compared against.
+dataset: mosu
+modalities: [visual_mosu]
+
+model:
+  d_model: null        # no projection: plain CA-SUM on 768-d input
+  block_size: 60       # 60 s at 1 fps
+  init_type: xavier
+  init_gain: 1.4142
+
+train:
+  n_epochs: 400
+  batch_size: 20       # 160 train videos -> 8 accumulated batches per epoch
+  lr: 5.0e-4
+  l2_req: 1.0e-5
+  clip: 5.0
+  seed: 12345
+  reg_factor: 0.6
+
+select:
+  start_epoch: 20

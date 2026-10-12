@@ -6,7 +6,9 @@ official/                      what every experiment and metric reads
   tvsum/ydata-anno.tsv         per-frame importance scores of the 20 annotators (used for tau/rho)
   tvsum/ydata-info.tsv         category, title, URL and length per video (titles: candidate text input)
   summe/eccv16_dataset_summe_google_pool5.h5
-  splits/{tvsum,summe}_splits.json             5 random 80/20 splits, as used by CA-SUM
+  mosu/mosu_subset.h5          200-video MoSu subsample (TripleSumm format, 1 fps): ground truth +
+                               768-d `features` (visual), `features_audio`, `features_text`
+  splits/{tvsum,summe,mosu}_splits.json        5 random 80/20 splits
 raw/                           source material for feature extraction
   tvsum/videos/<youtube_id>.mp4   50 videos, from ydata-tvsum50-video.zip
   tvsum/README.txt                official TVSum README
@@ -15,6 +17,8 @@ raw/                           source material for feature extraction
   summe/README.txt                official SumMe README
 features/<dataset>/<modality>.h5  unified, step-aligned format (src/vidsum/features/io.py)
   tvsum/audio_pann.h5, summe/audio_pann.h5     PANN Cnn14, 2048-d
+  mosu/audio_mosu.h5, mosu/text_mosu.h5        MoSu's own streams in unified format (vidsum.features.import_mosu);
+                                               text steps equal to the "no transcript" placeholder have mask = 0
 features/legacy/               symlinks to older files, NOT in the unified format; do not train on them as-is
   tvsum_resnet_pann_rp512.h5   ResNet50 + PANN, 1 fps, random-projected to 512, keyed by YouTube id
   tvsum_whisper.h5, summe_whisper.h5  512-d, n_steps-aligned, origin unverified (likely Whisper encoder)
@@ -33,6 +37,15 @@ byte-identical to the ones here. The extracted TVSum videos are byte-identical t
   zero with `mask = 0`. Re-download this video before extracting any new visual or text features for it.
 - **SumMe `Scuba` and `St Maarten Landing` have no audio track.** Their audio features are zero, with `mask = 0`.
 - The other 23 SumMe videos carry PCM audio in mp4, which macOS's built-in decoder can't read; decoding uses PyAV.
+
+## MoSu notes
+
+- Ground truth is YouTube "most replayed" (one crowd signal): `user_summary` has a single row, and
+  tau/rho are computed against `gtscore`. mAP uses 5-step shots, i.e. 5 s at 1 fps, as in TripleSumm.
+- The text stream's placeholder vector covers 27.7% of steps (in 188/200 videos); audio has none.
+- Results on this subset are not comparable to TripleSumm's published full-MoSu numbers (supervised,
+  ~50k videos). Compare methods with each other on this subset.
+- Reference points, split 0: random scores give F1 51.3, tau ~0, mAP50 54.9.
 
 ## Key mapping
 

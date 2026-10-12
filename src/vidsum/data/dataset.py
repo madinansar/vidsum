@@ -2,7 +2,8 @@
 
 Every modality is read from a file in the unified feature format (see features/io.py): one group per
 official key (`video_k`) holding `features` with shape [n_steps, D], aligned to the official `picks`.
-The special modality name "googlenet" reads the official GoogLeNet pool5 features, i.e. CA-SUM's input.
+The dataset's `official_modality` (paths.py: "googlenet" for TVSum/SumMe, "visual_mosu" for MoSu) reads
+the official h5's own `features`, i.e. CA-SUM's input.
 """
 import json
 
@@ -13,9 +14,6 @@ from torch.utils.data import DataLoader, Dataset
 
 from ..paths import dataset_info, feature_path
 
-OFFICIAL_VISUAL = "googlenet"
-
-
 def load_split(dataset, split_index):
     with open(dataset_info(dataset)["splits"], encoding="utf-8") as handle:
         split = json.load(handle)[int(split_index)]
@@ -23,7 +21,7 @@ def load_split(dataset, split_index):
 
 
 def _modality_file(dataset, modality):
-    if modality == OFFICIAL_VISUAL:
+    if modality == dataset_info(dataset)["official_modality"]:
         return dataset_info(dataset)["official_h5"]
     path = feature_path(dataset, modality)
     if not path.exists():

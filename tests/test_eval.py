@@ -5,7 +5,7 @@ import pytest
 
 from vidsum.eval.knapsack import knapsack
 from vidsum.eval.summary import evaluate_summary
-from vidsum.paths import dataset_info
+from vidsum.paths import dataset_info, feature_path
 
 
 def test_knapsack_is_optimal():
@@ -63,3 +63,31 @@ def test_googlenet_loader_matches_official_steps():
     assert len(train_keys) == 40 and len(test_keys) == 10 and not set(train_keys) & set(test_keys)
     ds = VideoSumDataset("tvsum", test_keys[:2], ["googlenet"])
     assert ds.dims == {"googlenet": 1024}
+
+
+needs_mosu = pytest.mark.skipif(
+    not (dataset_info("mosu")["official_h5"].exists() and feature_path("mosu", "text_mosu").exists()),
+    reason="MoSu subset or its converted features missing",
+)
+
+
+@needs_mosu
+def test_mosu_loader_and_reference_points():
+    import h5py
+
+    from vidsum.data.dataset import VideoSumDataset, load_split
+    from vidsum.eval.metrics import evaluate_scores
+
+    train_keys, test_keys = load_split("mosu", 0)
+    assert len(train_keys) == 160 and len(test_keys) == 40
+    ds = VideoSumDataset("mosu", test_keys[:3], ["visual_mosu", "audio_mosu", "text_mosu"])
+    assert ds.dims == {"visual_mosu": 768, "audio_mosu": 768, "text_mosu": 768}
+    assert ds[0]["masks"]["audio_mosu"].min() == 1  # audio has no placeholder
+
+    rng = np.random.default_rng(0)
+    with h5py.File(dataset_info("mosu")["official_h5"], "r") as hdf:
+        gt = {k: np.asarray(hdf[f"{k}/gtscore"]) for k in test_keys}
+    rand = evaluate_scores("mosu", {k: rng.random(len(v)) for k, v in gt.items()})
+    oracle = evaluate_scores("mosu", gt)
+    assert abs(rand["tau"]) < 0.05 and oracle["tau"] > 0.99 and oracle["map50"] > 99
+    assert oracle["f1"] > rand["f1"]

@@ -1,0 +1,24 @@
+# MoSu subset: static concat fusion of [visual_mosu, audio_mosu, text_mosu].
+# text_mosu steps with no transcript are masked (vidsum.features.import_mosu).
+dataset: mosu
+modalities: [visual_mosu, audio_mosu, text_mosu]   # first modality is the query for xattn
+
+model:
+  d_model: 512
+  fusion: concat
+  heads: 8
+  block_size: 60
+  init_type: xavier
+  init_gain: 1.4142
+
+train:
+  n_epochs: 400
+  batch_size: 20       # 160 train videos -> 8 accumulated batches per epoch
+  lr: 5.0e-4
+  l2_req: 1.0e-5
+  clip: 5.0
+  seed: 12345
+  reg_factor: 0.6
+
+select:
+  start_epoch: 20
